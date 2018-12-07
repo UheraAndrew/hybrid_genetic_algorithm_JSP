@@ -1,0 +1,4 @@
+Черга робіт
+1) Вигляд матриці Shedule
+2) Critical Path
+3) Swap -> shift
