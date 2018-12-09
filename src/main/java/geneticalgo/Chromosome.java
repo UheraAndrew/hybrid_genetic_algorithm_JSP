@@ -1,33 +1,35 @@
 package geneticalgo;
 
+import lombok.Getter;
+
 import static geneticalgo.Dispatcher.N;
 import static geneticalgo.Dispatcher.r;
 
-public class Chromosome {
-    double[] gene;
-    int time;
+@Getter
+class Chromosome {
+    private double[] genes;
 
-    public Chromosome() {
-        this.gene = new double[2 * N];
+    Chromosome(int n) {
+        this.genes = new double[2 * n];
     }
 
 
-    public static Chromosome cross(Chromosome a, Chromosome b) {
-        Chromosome m = new Chromosome();
+    static Chromosome cross(Chromosome a, Chromosome b) {
+        Chromosome m = new Chromosome(a.genes.length);
         for (int i = 0; i < 2 * N; i++) {
             // Tosing Tail
             if ((int) (Dispatcher.r.nextDouble() / Dispatcher.P) == 0) {
-                m.gene[i] = a.gene[i];
+                m.genes[i] = a.genes[i];
             } else {
-                m.gene[i] = b.gene[i];
+                m.genes[i] = b.genes[i];
             }
         }
         return m;
     }
 
-    public Chromosome initializedChromosome() {
-        for (int i = 0; i < this.gene.length; i++) {
-            this.gene[i] = r.nextDouble();
+    Chromosome initializedChromosome() {
+        for (int i = 0; i < this.genes.length; i++) {
+            this.genes[i] = r.nextDouble();
         }
         return this;
     }

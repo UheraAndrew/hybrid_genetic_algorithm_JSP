@@ -10,14 +10,15 @@ public class Population {
         this.chromosomes = new Chromosome[n];
     }
 
-    public Population createGeneration() {
+    public Population createGeneration(int genesNumber) {
         for (int i = 0; i < this.chromosomes.length; i++) {
-            chromosomes[i] = new Chromosome().initializedChromosome();
+            chromosomes[i] = new Chromosome(genesNumber).initializedChromosome();
         }
         return this;
     }
 
     public Population newGeneration() {
+
 //        10% - еліта перекопійовуємо
 //        наступні 20% схрещуємо
 //        наступні рандомно накидуємо
@@ -25,6 +26,8 @@ public class Population {
 
         Chromosome[] nextChromosomes = next.chromosomes;
         Chromosome[] currentChromosomes = this.chromosomes;
+
+        int chromosomeNumber = currentChromosomes[0].getGenes().length;
 
 
         for (int i = 0; i < N * 0.1; i++) {
@@ -41,11 +44,10 @@ public class Population {
             }
 
             nextChromosomes[i] = Chromosome.cross(currentChromosomes[a], currentChromosomes[b]);
-
         }
 
         for (int i = (int) (N * 0.2); i < N; i++) {
-            nextChromosomes[i] = new Chromosome().initializedChromosome();
+            nextChromosomes[i] = new Chromosome(chromosomeNumber).initializedChromosome();
         }
 
         return next;
