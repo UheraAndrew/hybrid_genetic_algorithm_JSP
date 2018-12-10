@@ -84,17 +84,12 @@ public class Shedule {
             System.out.println(operations[i]);
         }
 
-        int maxTime = -1;
-        for (int i = 0; i < operations.length; i++) {
-            if (maxTime < operations[i].getF()) {
-                maxTime = operations[i].getF();
-            }
-        }
 
 //        criticalPath = new Operation[maxTime];
 //        blocks = new int[maxTime];
         System.out.println("");
-        localSearch(maxTime);
+
+        while (localSearch()) ;
 
 //        int tempTime = maxTime;
 //        do {
@@ -110,7 +105,9 @@ public class Shedule {
                                  int[] pointer,
                                  LinkedHashSet<Integer> S) {
         int g = S.size();
-        while (g < n) {
+//        int g = S.size();// що таке g
+        int forDebag = n;
+        while (g < n * m) {
             updateE(g, operations, E, T, pointer);
             while (E.size() != 0) {
 //              Select Operation with highest priority
@@ -152,10 +149,12 @@ public class Shedule {
                 operations[jj].setF(F);
                 S.add(jj);
                 T.add(F);
-                g++;
+                g = S.size();
                 updateE(g, operations, E, T, pointer);
             }
         }
+        System.out.print("");
+
     }
 
 //    public void drawShedule() {
@@ -168,111 +167,200 @@ public class Shedule {
 //        }
 //    }
 
-    boolean localSearch(int currentMaxTime) {
+    boolean localSearch() {
 
         boolean currentSolutionUpdated;
+        currentSolutionUpdated = false;
+        // поки не update
+//        do {
+        System.out.println("VERY OFTEN");
+        //копіювання початок--------------------------------------------------------------------
+        // перекопійовуємо операції
+        //criticalPath
 
-        do {
-            currentSolutionUpdated = false;
-            //копіювання початок--------------------------------------------------------------------
-            Operation[] copiedOperation = new Operation[operations.length];
-            // перекопійовуємо операції
-            for (int i = 0; i < operations.length; i++) {
-                copiedOperation[i] = (Operation) operations[i].clone();
-            }
-            //criticalPath
-            ArrayList<Operation> criticalPath = findCriticalPath(copiedOperation);
-            // оприділяємо критичний блок
+        Operation[] copiedOperation = copyOperations();
+        ArrayList<Integer> criticalPath = findCriticalPath(copiedOperation);
 
-            int start, end;
-            end = criticalPath.size() - 1;
+        // оприділяємо критичний блок
+        int start, end;
+        end = criticalPath.size() - 1;
 
-            Operation temp;
-            // проходимся по блоках
-            while (end > -1) {
-                // визначаємо початок і кінець блоку
-                start = end;
-                temp = criticalPath.get(start);
+        int temp;
+        // проходимся по блоках
+        while (end > -1) {
+            // визначаємо початок і кінець блоку наступного
+            start = end;
+            temp = criticalPath.get(start);
 
-                for (int i = end - 1; i > -1; i--) {
-                    if (criticalPath.get(i).getMachineIndex() == temp.getMachineIndex()) {
-                        end--;
-                    } else {
-                        break;
-                    }
+            for (int i = end - 1; i > -1; i--) {
+                if (copiedOperation[criticalPath.get(i)].getMachineIndex() == copiedOperation[temp].getMachineIndex()) {
+                    end--;
+                } else {
+                    break;
                 }
-
-                // end і start визначають початок і кінець блоку
-                // тепер вертимо
-                if (start - end + 1 >= 2) {
-                    //swap operations[start] і operations[start - 1]
-                    Operation left,right;
-                    if(start - end + 1 == 2){
-                        left = copiedOperation[start - 1];
-                        right = copiedOperation[start];
-
-                    }
-                    else{
-
-                    }
-
-                    swap(left, right);
-                    //тепер треба зсунуту
-                    // шукаємо індекси тих блоків
-                    int leftIndex = -1;
-                    int rightIndex = -1;
-                    for (int i = 0; i < operations.length; i++) {
-                        if (operations[i].equals(left)) {
-                            leftIndex = i;
-                        }
-                        if (operations[i].equals(right)) {
-                            rightIndex = i;
-                        }
-                    }
-                    // перекопійовуємо S, T,
-                    LinkedHashSet<Integer> copiedS = new LinkedHashSet<>();
-                    ArrayList<Integer> copiedT = new ArrayList<>();
-                    for (Integer s : S) {
-                        if (s != rightIndex && s != leftIndex) {
-                            copiedS.add(s);
-                        } else {
-                            break;
-                        }
-                    }
-                    for (int i = 0; i < copiedS.size(); i++) {
-                        copiedT.add(T.get(i));
-                    }
-                    // ще треба якимось чином перекопіювати pointer бо без них не працює
-                    int[] copiedPointer = new int[pointer.length];
-                    for (Integer s : copiedS) {
-                        copiedPointer[copiedOperation[s].getJobIndex()]++;
-                    }
-                    ArrayList<Integer> copiedE = new ArrayList<>();
-                    constructShedule(copiedOperation, copiedE, copiedT, copiedPointer, copiedS);
-
-                    // визначаємо час максимальний час t
-                    // якщо менший то знайшли рішення нє по новій
-                    int findMaxTime = -1;
-                    for (int i = 0; i < copiedOperation.length; i++) {
-                        if (findMaxTime < copiedOperation[i].getF()) {
-                            findMaxTime = copiedOperation[i].getF();
-                        }
-                    }
-                    if (currentMaxTime > findMaxTime) {
-                        currentSolutionUpdated = true;
-                        // комітимо
-
-                    }
-                }
-                end--;
             }
 
+            // end і start визначають початок і кінець блоку
+            // тепер вертимо
+            if (start - end + 1 >= 2) {
+                //swap operations[start] і operations[start - 1]
+                Operation left, right;
+                if (start - end + 1 == 2) {
+                    System.out.println("start - 1 is " + criticalPath.get(start - 1) + "  start is " + criticalPath.get(start));
+                    copiedOperation = copyOperations();
+                    swap(copiedOperation, criticalPath.get(start - 1), criticalPath.get(start));
+                    currentSolutionUpdated = shift(copiedOperation, criticalPath, start - 1, start);
+                    if (currentSolutionUpdated) {
+                        return true;
+                    }
+                } else {
+                    copiedOperation = copyOperations();
 
-        } while (currentSolutionUpdated);
+                    swap(copiedOperation, criticalPath.get(start), criticalPath.get(start - 1));
+//                        ТУТ МОЖУТЬ БУТИ ЖОСТКІ ТРАБЛИ
+//                      ______________________________________WARNING___________________________________________
+                    currentSolutionUpdated = shift(copiedOperation, criticalPath, start, start - 1);
+
+                    if (currentSolutionUpdated) {
+                        return true;
+                    }
+
+                    copiedOperation = copyOperations();
+                    swap(copiedOperation, criticalPath.get(end), criticalPath.get(end + 1));
+                    currentSolutionUpdated = shift(copiedOperation, criticalPath, end, end + 1);
+                    if (currentSolutionUpdated) {
+                        return true;
+                    }
+                }
+                //тепер треба зсунуту
+                // шукаємо індекси тих блоків
+
+            }
+            end--;
+        }
+
+
+//        } while (currentSolutionUpdated);
 
         return false;
     }
-    private void procedure(Operation[] copiedOperation){}
+
+    private boolean shift(Operation[] copiedOperations, ArrayList<Integer> criticalPath, int start, int end) {
+        boolean updated = false;
+        int temp = copiedOperations[criticalPath.get(end)].getF();
+        System.out.println(copiedOperations[criticalPath.get(start)].getF() + "____" + copiedOperations[criticalPath.get(end)].getF());
+        copiedOperations[criticalPath.get(end)].setF(copiedOperations[criticalPath.get(start)].getF());
+        copiedOperations[criticalPath.get(start)].setF(temp);
+        System.out.println(copiedOperations[criticalPath.get(start)].getF() + "____" + copiedOperations[criticalPath.get(end)].getF());
+
+        for (int i = 0; i < copiedOperations.length; ++i) {
+            if (copiedOperations[i].getPrioriti() > copiedOperations[criticalPath.get(start)].getPrioriti()) {
+                if (copiedOperations[i].getJobIndex() == copiedOperations[criticalPath.get(start)].getJobIndex()) {
+                    int new_f = 0;
+                    for (int j = 0; j < copiedOperations.length; ++j) {
+                        if (copiedOperations[j].getMachineIndex() == copiedOperations[i].getMachineIndex()) {
+                            new_f += copiedOperations[j].getF();
+                        }
+                    }
+                    if (copiedOperations[i].getF() > new_f) updated = true;
+                    copiedOperations[i].setF(new_f);
+                }
+            }
+        }
+        int currentTime = -1;
+        for (int i = 0; i < copiedOperations.length; i++) {
+            System.out.println(copiedOperations[i]);
+            if (currentTime < copiedOperations[i].getF()) {
+                currentTime = copiedOperations[i].getF();
+            }
+        }
+
+        System.out.println("НІІІІІІІІІІІІІІІІІІІХХХХХХХХХХХХХУУУУУУУУУУУУЯЯЯЯЯЯЯЯЯЯЯЯ");
+        System.out.println(currentTime);
+        if (currentTime < time()) {
+            System.out.println("_____________________________________UPDATED_____________________________________");
+            for (int i = 0; i < copiedOperations.length; i++) {
+                operations[i] = copiedOperations[i];
+            }
+        }
+        ;
+
+        return updated;
+    }
+
+    private boolean procedure(Operation[] copiedOperation, Operation left, Operation right) {
+        int currentMaxTime = time();
+
+        int leftIndex = -1;
+        int rightIndex = -1;
+        for (int i = 0; i < copiedOperation.length; i++) {
+            if (copiedOperation[i].equals(left)) {
+                leftIndex = i;
+            }
+            if (copiedOperation[i].equals(right)) {
+                rightIndex = i;
+            }
+        }
+
+        // перекопійовуємо S, T,
+        LinkedHashSet<Integer> copiedS = new LinkedHashSet<>();
+        ArrayList<Integer> copiedT = new ArrayList<>();
+        for (Integer s : S) {
+            if (s != rightIndex && s != leftIndex) {
+                copiedS.add(s);
+            } else {
+                break;
+            }
+        }
+        for (int i = 0; i < copiedOperation.length; i++) {
+            if (!copiedS.contains(i)) {
+                copiedOperation[i].setFMC(0);
+                copiedOperation[i].setF(0);
+            }
+        }
+
+        for (int i = 0; i < copiedS.size() + 1; i++) {
+            copiedT.add(T.get(i));
+        }
+        // зануляєм F і
+
+        // ще треба якимось чином перекопіювати pointer бо без них не працює
+        int[] copiedPointer = new int[pointer.length];
+        for (Integer s : copiedS) {
+            copiedPointer[copiedOperation[s].getJobIndex()]++;
+        }
+
+        ArrayList<Integer> copiedE = new ArrayList<>();
+        constructShedule(copiedOperation, copiedE, copiedT, copiedPointer, copiedS);
+
+        // визначаємо час максимальний час t
+        // якщо менший то знайшли рішення нє по новій
+        int findMaxTime = -1;
+        for (int i = 0; i < copiedOperation.length; i++) {
+            if (findMaxTime < copiedOperation[i].getF()) {
+                findMaxTime = copiedOperation[i].getF();
+            }
+        }
+        System.out.println("current = " + currentMaxTime + " findMaxTime " + findMaxTime);
+        if (currentMaxTime > findMaxTime) {
+            // комітимо
+            System.out.println("CCCCCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMMMMMMMMMMIIIIIIIIIIIIIIIIIIIIIIIITTTTTTTTTTTTTTTT");
+            for (int i = 0; i < copiedOperation.length; i++) {
+                operations[i] = copiedOperation[i];
+            }
+            for (int i = 0; i < copiedT.size(); i++) {
+                T.set(i, copiedT.get(i));
+            }
+
+            S.clear();
+            for (Integer a : copiedS) {
+                S.add(a);
+            }
+
+            return true;
+        }
+        return false;
+    }
 
 //    private void swap(Operation[][] tempTaskTable, Operation left, Operation right) {
 //        //тут мало б бути все ок
@@ -297,70 +385,25 @@ public class Shedule {
 //
 //    }
 
-    private void swap(Operation a, Operation b) {
-        double temp;
-        temp = a.getPrioriti();
-        a.setPrioriti(b.getPrioriti());
-        b.setPrioriti(temp);
+    private void swap(Operation[] operations, int a, int b) {
+        temp = operations[a].getPrioriti();
+        operations[a].setPrioriti(operations[b].getPrioriti());
+        operations[b].setPrioriti(temp);
     }
 
 
-    private ArrayList<Operation> findCriticalPath(Operation[] operations) {
-//        criticalPath = new Operation[timeTable[0].length];
-//        blocks = new int[timeTable[0].length];
-//        int counter = 1;
-//        int end;
-//        //find the ending
-//        int i = 0;
-//        int j;
-//        // тут може зациклитись бо не знайде критичного шляху
-//        // пошук кінця
-//        for (j = timeTable[0].length - 1; j > -1; j--) {
-//            for (i = 0; i < timeTable.length; i++) {
-//                if (timeTable[i][j] != null) {
-//                    break;
-//                }
-//                blocks[j] = -1;
-//            }
-//            if (timeTable[i][j] != null) {
-//                break;
-//            }
-//        }
-//
-//        int endJobIndex = timeTable[i][j].getJobIndex();
-//        while (j > -1) {
-//            // знайшли кінець
-//            for (i = 0; i < timeTable.length; ++i) {
-//                if (timeTable[i][j] != null && timeTable[i][j].getJobIndex() == endJobIndex) {
-//                    break;
-//                }
-//            }
-//
-//            //cчитали критичний блок
-//            while (j > -1 && timeTable[i][j] != null) {
-//                //стягнули вниз блок
-//                endJobIndex = timeTable[i][j].getJobIndex();
-//                for (int k = 0; k < timeTable[i][j].getProcessingTime(); k++) {
-//                    //записали в criticalPath і criticalBlocks
-//                    criticalPath[j - k] = timeTable[i][j];
-//                    blocks[j - k] = counter;
-//                }
-//                j -= timeTable[i][j].getProcessingTime();
-//            }
-//            counter++;
-//            //перейшли до наступного блоку якщо такий є
-//        }
-        //маємо доступні
-
+    private ArrayList<Integer> findCriticalPath(Operation[] operations) {
         Operation lastOperation = operations[0];
+        int index = 0;
         for (int i = 0; i < operations.length; i++) {
             if (lastOperation.getF() < operations[i].getF()) {
                 lastOperation = operations[i];
+                index = i;
             }
         }
         // шукаємо наступний від нього FMC - processingTime
-        ArrayList<Operation> criticalPath = new ArrayList<>();
-        criticalPath.add(lastOperation);
+        ArrayList<Integer> criticalPath = new ArrayList<>();
+        criticalPath.add(index);
 
         int time = lastOperation.getF() - lastOperation.getProcessingTime();
 
@@ -373,7 +416,7 @@ public class Shedule {
                         && operations[i].getF() == time) {
                     lastOperation = operations[i];
                     time = time - lastOperation.getProcessingTime();
-                    criticalPath.add(lastOperation);
+                    criticalPath.add(i);
                     endBlock = false;
                     break;
                 }
@@ -389,13 +432,14 @@ public class Shedule {
                         operations[i].getJobIndex() == lastOperation.getJobIndex()) {
                     lastOperation = operations[i];
                     time = time - lastOperation.getProcessingTime();
-                    criticalPath.add(lastOperation);
+                    criticalPath.add(i);
                     break;
                 }
             }
         }
 //        ________________________WARNING_____________________
 //        ERORR кастингування
+
         return criticalPath;
     }
 
@@ -412,12 +456,14 @@ public class Shedule {
         E.clear();
         int indexT = 0;
 
+        System.out.println("\n____________________________\n" + T);
         boolean lol = true;
         while (E.size() == 0) {
             for (int i = 0; i < n; i++) {
                 if (pointer[i] == -1) continue;
                 lol = false;
                 int cI = i * m + pointer[i];
+                System.out.println(indexT);
                 if (operations[cI].getF() < operations[g].getDelay() + T.get(indexT)) {
                     E.add(cI);
                 }
