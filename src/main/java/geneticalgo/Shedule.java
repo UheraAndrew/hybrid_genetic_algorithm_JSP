@@ -16,8 +16,8 @@ public class Shedule {
     //
     private Chromosome chromosome;
     // read paper
-    private ArrayList<Integer> E;
     private LinkedHashSet<Integer> S;
+    private ArrayList<Integer> E;
     private ArrayList<Integer> T;
 //    private ArrayList<Integer> FMC;
 //    private ArrayList<Integer> F;
@@ -27,6 +27,15 @@ public class Shedule {
     private static Operation[] operations;
     private static double maxDuration;
 
+    public int time() {
+        int maxtTime = 0;
+        for (int i = 0; i < operations.length; i++) {
+            if (maxtTime < operations[i].getF()) {
+                maxtTime = operations[i].getF();
+            }
+        }
+        return maxtTime;
+    }
 
     public Shedule(Chromosome chromosome) {
         this.chromosome = chromosome;
@@ -64,12 +73,11 @@ public class Shedule {
 //                timeTable[i][j] = null;
 //            }
 //        }
-
-        test();
     }
 
     public void test() {
-        constructShedule();
+        // початковий shedule
+        constructShedule(operations, E, T, pointer, S);
 
         System.out.println("\n +++++++++++++++++++ \n");
         for (int i = 0; i < operations.length; i++) {
@@ -82,10 +90,11 @@ public class Shedule {
                 maxTime = operations[i].getF();
             }
         }
-        criticalPath = new Operation[maxTime];
-        blocks = new int[maxTime];
-        findCriticalPath(operations);
 
+//        criticalPath = new Operation[maxTime];
+//        blocks = new int[maxTime];
+        System.out.println("");
+        localSearch(maxTime);
 
 //        int tempTime = maxTime;
 //        do {
@@ -95,16 +104,20 @@ public class Shedule {
 
     }
 
-    public void constructShedule() {
-        int g = 0;
+    public void constructShedule(Operation[] operations,
+                                 ArrayList<Integer> E,
+                                 ArrayList<Integer> T,
+                                 int[] pointer,
+                                 LinkedHashSet<Integer> S) {
+        int g = S.size();
         while (g < n) {
-            updateE(g);
-            while (this.E.size() != 0) {
+            updateE(g, operations, E, T, pointer);
+            while (E.size() != 0) {
 //              Select Operation with highest priority
                 int jj = -1;
                 double maxPriority = -1;
-                for (int i = 0; i < this.E.size(); i++) {
-                    int index = this.E.get(i);
+                for (int i = 0; i < E.size(); i++) {
+                    int index = E.get(i);
                     if (maxPriority < operations[index].getPrioriti()) {
                         maxPriority = operations[index].getPrioriti();
                         jj = index;
@@ -124,7 +137,7 @@ public class Shedule {
                 operations[jj].setFMC(FMC);
 //              set Fg
                 int F = 0;
-                if (this.S.size() != 0) {
+                if (S.size() != 0) {
                     int maxTime = -1;
                     for (int operationIndex : this.S) {
                         if (maxTime < operations[operationIndex].getF()) {
@@ -137,10 +150,10 @@ public class Shedule {
 
                 //Updating
                 operations[jj].setF(F);
-                this.S.add(jj);
-                this.T.add(F);
+                S.add(jj);
+                T.add(F);
                 g++;
-                updateE(g);
+                updateE(g, operations, E, T, pointer);
             }
         }
     }
@@ -155,13 +168,13 @@ public class Shedule {
 //        }
 //    }
 
-    int localSearch(int currentMaxTime) {
+    boolean localSearch(int currentMaxTime) {
 
         boolean currentSolutionUpdated;
-        int counter;
 
         do {
             currentSolutionUpdated = false;
+            //копіювання початок--------------------------------------------------------------------
             Operation[] copiedOperation = new Operation[operations.length];
             // перекопійовуємо операції
             for (int i = 0; i < operations.length; i++) {
@@ -174,11 +187,12 @@ public class Shedule {
             int start, end;
             end = criticalPath.size() - 1;
 
-            Operation temp = criticalPath.get(end);
-
+            Operation temp;
+            // проходимся по блоках
             while (end > -1) {
+                // визначаємо початок і кінець блоку
                 start = end;
-                temp = criticalPath.get(end);
+                temp = criticalPath.get(start);
 
                 for (int i = end - 1; i > -1; i--) {
                     if (criticalPath.get(i).getMachineIndex() == temp.getMachineIndex()) {
@@ -189,10 +203,19 @@ public class Shedule {
                 }
 
                 // end і start визначають початок і кінець блоку
+                // тепер вертимо
                 if (start - end + 1 >= 2) {
                     //swap operations[start] і operations[start - 1]
-                    Operation left = copiedOperation[start - 1];
-                    Operation right = copiedOperation[start]
+                    Operation left,right;
+                    if(start - end + 1 == 2){
+                        left = copiedOperation[start - 1];
+                        right = copiedOperation[start];
+
+                    }
+                    else{
+
+                    }
+
                     swap(left, right);
                     //тепер треба зсунуту
                     // шукаємо індекси тих блоків
@@ -216,18 +239,30 @@ public class Shedule {
                             break;
                         }
                     }
-                    for (int i = 0; i < T.size(); i++) {
-                        if (T.get(i) != rightIndex && T.get(i) != leftIndex) {
-                            copiedT.add(T.get(i));
-                        } else {
-                            break;
+                    for (int i = 0; i < copiedS.size(); i++) {
+                        copiedT.add(T.get(i));
+                    }
+                    // ще треба якимось чином перекопіювати pointer бо без них не працює
+                    int[] copiedPointer = new int[pointer.length];
+                    for (Integer s : copiedS) {
+                        copiedPointer[copiedOperation[s].getJobIndex()]++;
+                    }
+                    ArrayList<Integer> copiedE = new ArrayList<>();
+                    constructShedule(copiedOperation, copiedE, copiedT, copiedPointer, copiedS);
+
+                    // визначаємо час максимальний час t
+                    // якщо менший то знайшли рішення нє по новій
+                    int findMaxTime = -1;
+                    for (int i = 0; i < copiedOperation.length; i++) {
+                        if (findMaxTime < copiedOperation[i].getF()) {
+                            findMaxTime = copiedOperation[i].getF();
                         }
                     }
+                    if (currentMaxTime > findMaxTime) {
+                        currentSolutionUpdated = true;
+                        // комітимо
 
-                    //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-
-
-//                    currentSolutionUpdated = true;
+                    }
                 }
                 end--;
             }
@@ -235,9 +270,9 @@ public class Shedule {
 
         } while (currentSolutionUpdated);
 
-        return -1231234123;
+        return false;
     }
-
+    private void procedure(Operation[] copiedOperation){}
 
 //    private void swap(Operation[][] tempTaskTable, Operation left, Operation right) {
 //        //тут мало б бути все ок
@@ -263,15 +298,12 @@ public class Shedule {
 //    }
 
     private void swap(Operation a, Operation b) {
-
+        double temp;
+        temp = a.getPrioriti();
+        a.setPrioriti(b.getPrioriti());
+        b.setPrioriti(temp);
     }
 
-    private void shift(Operation[] copiedOperations, LinkedHashSet<Integer> copiedS,
-                       ArrayList<Integer> copiedT, int indexLeft, int indexRight) {
-//              багато дебажити
-
-
-    }
 
     private ArrayList<Operation> findCriticalPath(Operation[] operations) {
 //        criticalPath = new Operation[timeTable[0].length];
@@ -375,22 +407,23 @@ public class Shedule {
         return tempOperations;
     }
 
-    private void updateE(int g) {
-        this.E.clear();
+    private void updateE(int g, Operation[] operations, ArrayList<Integer> E,
+                         ArrayList<Integer> T, int[] pointer) {
+        E.clear();
         int indexT = 0;
 
         boolean lol = true;
-        while (this.E.size() == 0) {
+        while (E.size() == 0) {
             for (int i = 0; i < n; i++) {
                 if (pointer[i] == -1) continue;
                 lol = false;
                 int cI = i * m + pointer[i];
-                if (operations[cI].getF() < operations[g].getDelay() + this.T.get(indexT)) {
-                    this.E.add(cI);
+                if (operations[cI].getF() < operations[g].getDelay() + T.get(indexT)) {
+                    E.add(cI);
                 }
             }
             ++indexT;
-            if (lol && indexT >= this.T.size()) {
+            if (lol && indexT >= T.size()) {
                 break;
             }
 

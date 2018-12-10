@@ -46,7 +46,7 @@ public class Dispatcher {
                 }
 
                 runTest(dataSet);
-                System.exit(1);
+                System.exit(47);
             }
 
         } //      Считуєм джейсон
@@ -57,7 +57,7 @@ public class Dispatcher {
     }
 
 
-    public static int[][][] runTest(int[][] dataSet) {
+    public static int runTest(int[][] dataSet) {
         /**
          * in: dataSet  [job][machine] = int
          *
@@ -77,12 +77,13 @@ public class Dispatcher {
         genes[7] = 4.2;
 
         Shedule s = new Shedule(chromosome);
-
+        s.test();
+        System.out.println(s.time());
 
 // Shedule s = new Shedule(new Chromosome(dataSet.length*dataSet[0].length).initializedChromosome());
 
 
-        return new int[][][]{{{1}}};
+        return 0;
     }
 
 }
