@@ -20,11 +20,8 @@ public class Test {
                     break;
                 }
             }
-
             System.out.println(end + "   " + start);
             end--;
         }
-
     }
-
 }
