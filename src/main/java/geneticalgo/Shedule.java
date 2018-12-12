@@ -76,27 +76,14 @@ public class Shedule {
     }
 
     public void test() {
-        // початковий shedule
         constructShedule(operations, E, T, pointer, S);
-
         System.out.println("\n +++++++++++++++++++ \n");
         for (int i = 0; i < operations.length; i++) {
             System.out.println(operations[i]);
         }
-
-
-//        criticalPath = new Operation[maxTime];
-//        blocks = new int[maxTime];
-        System.out.println("");
-
-        while (localSearch()) ;
-
-//        int tempTime = maxTime;
-//        do {
-//            tempTime = localSearch(tempTime);
-//        }
-//        while (tempTime != maxTime);
-
+        System.out.println("CURRENT MAKESPAN IS " + operations[operations.length - 1].getF());
+        int new_makespan = localSearch();
+        System.out.println("NEW MAKESPAN IS " + new_makespan);
     }
 
     public void constructShedule(Operation[] operations,
@@ -167,7 +154,7 @@ public class Shedule {
 //        }
 //    }
 
-    boolean localSearch() {
+    int localSearch() {
 
         boolean currentSolutionUpdated = false;
         Operation[] copiedOperation = copyOperations();
@@ -216,7 +203,7 @@ public class Shedule {
                 --end;
             }
         } while (currentSolutionUpdated);
-        return false;
+        return copiedOperation[copiedOperation.length - 1].getF();
     }
 
     private boolean shift(Operation[] operations, int end) {
