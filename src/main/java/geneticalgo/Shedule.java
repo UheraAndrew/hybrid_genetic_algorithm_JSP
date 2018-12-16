@@ -180,6 +180,7 @@ public class Shedule {
                 if (swapTime < this.time(operations)) {
                     // local commit of solution update
                     operations = tempOperations;
+
                     return true;
 
                 }
@@ -318,7 +319,7 @@ public class Shedule {
                 }
                 if (hasOperationInOtherMachune) continue;
 
-                time = 0;
+//                time = 0;
                 break;
 
             }
