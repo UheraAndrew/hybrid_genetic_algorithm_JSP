@@ -3,7 +3,7 @@ package geneticalgo;
 public class Test {
     public static void main(String[] args) {
         int[] test = new int[]{
-                4, 4, 3, 5, 5, 5, 5, 4, 4, 6
+                  4, 4, 3, 5, 5, 5, 5, 4, 4, 6
         };
 
         int start, end;

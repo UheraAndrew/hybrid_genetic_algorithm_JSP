@@ -19,14 +19,13 @@ public class Dispatcher {
         r.setSeed(20);
     }
 
-
     public static void main(String[] args) {
         try {
             String text = new String(Files.readAllBytes(Paths.get("src/main/resources/dataset.json")), StandardCharsets.UTF_8);
             JSONArray tests = new JSONArray(text);
+            JSONObject test;
             for (int i = 0; i < tests.length(); i++) {
-
-                JSONObject test = (JSONObject) tests.get(i);
+                test = (JSONObject) tests.get(i);
                 JSONArray matrix = (JSONArray) test.get("data");
                 int[][] dataSet = new int[matrix.length()][];
                 for (int j = 0; j < matrix.length(); j++) {
@@ -37,23 +36,14 @@ public class Dispatcher {
                     }
 
                 }
-                for (int j = 0; j < dataSet.length; j++) {
-                    for (int k = 0; k < dataSet[j].length; k++) {
-                        System.out.print(dataSet[j][k]+" ");
-                    }
-                    System.out.println();
-
-                }
-
-                runTest(dataSet);
-                System.exit(47);
+                System.out.println("test name " + test.get("description") + " time = " + runTest(dataSet));
             }
 
         } //      Считуєм джейсон
         catch (IOException e) {
             e.printStackTrace();
         }
-//      d.run();
+
     }
 
 
@@ -64,26 +54,28 @@ public class Dispatcher {
          * return: [machine][queue operations for current machine] = [job, time]
          *
          */
-        Shedule.setOperations(dataSet);
-        Chromosome chromosome = new Chromosome(4);
-        double[] genes = chromosome.getGenes();
-        genes[0] = 0.22;
-        genes[1] = 0.2;
-        genes[2] = 0.25;
-        genes[3] = 0.9;
-        genes[4] = 0.84;
-        genes[5] = 1.44;
-        genes[6] = 1.5;
-        genes[7] = 4.2;
+        N = dataSet.length * dataSet[0].length;
+        Population populatio = new Population(2 * N).createGeneration(2 * N);
 
-        Shedule s = new Shedule(chromosome);
-        s.test();
-        System.out.println(s.time());
+        for (int i = 0; i < 400; i++) {
+//            System.out.println("i = " + i + " time " + populatio.chromosomes[0].getTime());
+            populatio = populatio.newGeneration();
+            // evaluate
+            for (int chIndex = 0; chIndex < populatio.chromosomes.length; chIndex++) {
+//                System.out.println("chIndex = " + chIndex);
+                Shedule.setOperations(dataSet);
+                Shedule s = new Shedule(populatio.chromosomes[chIndex]);
+                s.test();
+                populatio.chromosomes[chIndex].setTime(s.time(Shedule.getOperations()));
 
-// Shedule s = new Shedule(new Chromosome(dataSet.length*dataSet[0].length).initializedChromosome());
+            }
 
+            // sort
+            populatio.sort();
+        }
+        populatio.sort();
 
-        return 0;
+        return populatio.chromosomes[0].getTime();
     }
 
 }
