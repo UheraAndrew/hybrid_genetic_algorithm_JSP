@@ -12,11 +12,9 @@ import java.util.Objects;
 class Operation implements Cloneable {
     private int jobIndex;
     private int machineIndex;
-    private double prioriti;
-    private double delay;
+    private double priority;
     private int processingTime;
     private int F;
-    private int FMC;
 
     Operation(int jobIndex, int machineIndex, int processingTime) {
         this.jobIndex = jobIndex;
@@ -24,11 +22,12 @@ class Operation implements Cloneable {
         this.processingTime = processingTime;
     }
 
+
     @Override
     protected Object clone() {
         Object o = null;
         try {
-            o =  super.clone();
+            o = super.clone();
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
@@ -42,15 +41,13 @@ class Operation implements Cloneable {
         Operation operation = (Operation) o;
         return jobIndex == operation.jobIndex &&
                 machineIndex == operation.machineIndex &&
-                Double.compare(operation.prioriti, prioriti) == 0 &&
-                Double.compare(operation.delay, delay) == 0 &&
+                Double.compare(operation.priority, priority) == 0 &&
                 processingTime == operation.processingTime &&
-                F == operation.F &&
-                FMC == operation.FMC;
+                F == operation.F;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobIndex, machineIndex, prioriti, delay, processingTime, F, FMC);
+        return Objects.hash(jobIndex, machineIndex, priority, processingTime, F);
     }
 }

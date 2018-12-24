@@ -2,22 +2,20 @@ package geneticalgo;
 
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class Dispatcher {
-    public static int N;//sizeOfPopulation
-    public final static double P = 0.7;//PROBABILITY
-    public final static Random r = new Random();
+import static geneticalgo.Configurations.numberOfPopulation;
 
-    static {
-        r.setSeed(20);
-    }
+public class Dispatcher {
+
 
     public static void main(String[] args) {
         try {
@@ -25,6 +23,7 @@ public class Dispatcher {
             JSONArray tests = new JSONArray(text);
             JSONObject test;
             for (int i = 0; i < tests.length(); i++) {
+
                 test = (JSONObject) tests.get(i);
                 JSONArray matrix = (JSONArray) test.get("data");
                 int[][] dataSet = new int[matrix.length()][];
@@ -36,7 +35,8 @@ public class Dispatcher {
                     }
 
                 }
-                System.out.println("test name " + test.get("description") + " time = " + runTest(dataSet));
+                System.out.println("test name: " + test.get("description") + " time = " + runTest(dataSet));
+                System.exit(47);
             }
 
         } //      Считуєм джейсон
@@ -46,36 +46,27 @@ public class Dispatcher {
 
     }
 
-
     public static int runTest(int[][] dataSet) {
-        /**
-         * in: dataSet  [job][machine] = int
-         *
-         * return: [machine][queue operations for current machine] = [job, time]
-         *
-         */
-        N = dataSet.length * dataSet[0].length;
-        Population populatio = new Population(2 * N).createGeneration(2 * N);
-
-        for (int i = 0; i < 400; i++) {
-//            System.out.println("i = " + i + " time " + populatio.chromosomes[0].getTime());
-            populatio = populatio.newGeneration();
-            // evaluate
-            for (int chIndex = 0; chIndex < populatio.chromosomes.length; chIndex++) {
-//                System.out.println("chIndex = " + chIndex);
-                Shedule.setOperations(dataSet);
-                Shedule s = new Shedule(populatio.chromosomes[chIndex]);
-                s.test();
-                populatio.chromosomes[chIndex].setTime(s.time(Shedule.getOperations()));
-
+        Population population = new Population(dataSet.length * dataSet[0].length);
+        population.createGeneration();
+        int bestTime = Integer.MAX_VALUE;
+        Chromosome bestChromosome = null;
+        for (int i = 0; i < numberOfPopulation; i++) {
+            for (int j = 0; j < population.getChromosomes().length; j++) {
+                Shedule temp = new Shedule(dataSet, population.getChromosomes()[j]);
+                population.getChromosomes()[j].setTimeOfShedule(temp.getTimeOfAllWorks());
+                if (bestTime > population.getChromosomes()[j].getTimeOfShedule()) {
+                    bestTime = population.getChromosomes()[j].getTimeOfShedule();
+                    bestChromosome = population.getChromosomes()[j];
+                }
             }
-
-            // sort
-            populatio.sort();
+            System.out.println("Population #" + i + "[Done] Best time = " + bestTime);
+            population = population.newGeneration();
         }
-        populatio.sort();
+        System.out.println("Best Chromosome = " + Arrays.toString(bestChromosome.getGenes()));
+        return bestTime;
 
-        return populatio.chromosomes[0].getTime();
     }
+
 
 }
